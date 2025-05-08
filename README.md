@@ -4,7 +4,7 @@
 1. Установка необходимого ПО
 На всех узлах (Master, Replica и Arbiter) выполнить:
 
-bash
+
 ## Для Ubuntu/Debian
 ``` python
   sudo apt update
@@ -221,7 +221,7 @@ User=postgres
 WantedBy=multi-user.target
 Затем:
 
-bash
+
 sudo systemctl daemon-reload
 sudo systemctl enable pg_agent
 sudo systemctl start pg_agent
