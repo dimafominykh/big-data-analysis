@@ -32,10 +32,9 @@
 ``` python
 sudo -u postgres /usr/lib/postgresql/12/bin/initdb -D /var/lib/postgresql/12/main
 ``` 
-3. Настройка конфигурации
+2. Настройка конфигурации
 Отредактируйте /var/lib/postgresql/12/main/postgresql.conf:
-``` python
-ini
+``` ini
 listen_addresses = '*'
 wal_level = replica
 max_wal_senders = 3
@@ -53,7 +52,7 @@ host    all             all             pg-replica/32       md5
 ``` python
 sudo -u postgres psql -c "CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD 'securepassword';"
 ``` 
-7. Запуск сервера
+5. Запуск сервера
 ``` python
 sudo systemctl start postgresql@12-main
 ``` 
@@ -63,23 +62,23 @@ sudo systemctl start postgresql@12-main
 ``` python 
 sudo systemctl stop postgresql
 ``` 
-3. Создание резервной копии с Master
+2. Создание резервной копии с Master
 ``` python
 sudo -u postgres rm -rf /var/lib/postgresql/12/main/*
 sudo -u postgres pg_basebackup -h pg-master -U replicator -D /var/lib/postgresql/12/main -P -R -X stream
 ``` 
 Введите пароль securepassword при запросе.
 
-5. Настройка файла standby.signal
+3. Настройка файла standby.signal
 ``` python
 sudo -u postgres touch /var/lib/postgresql/12/main/standby.signal
 ``` 
-7. Проверка конфигурации
+4. Проверка конфигурации
 Убедитесь, что в /var/lib/postgresql/12/main/postgresql.auto.conf есть:
 
-ini
+``` ini
 primary_conninfo = 'user=replicator password=securepassword host=pg-master port=5432 sslmode=prefer sslcompression=0 gssencmode=prefer krbsrvname=postgres target_session_attrs=any'
-
+``` 
 5. Запуск сервера
 ``` python
 sudo systemctl start postgresql@12-main
