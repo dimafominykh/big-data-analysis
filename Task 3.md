@@ -7,18 +7,18 @@
 Основные таблицы:
 person - информация о людях
  
-sql
+```sql
 CREATE TABLE person (
   person_id BIGSERIAL PRIMARY KEY,
   full_name TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   metadata JSONB
 );
-
+```
 dna_sequence - последовательности ДНК
 
 
-sql
+```sql
 CREATE TABLE dna_sequence (
   sequence_id BIGSERIAL PRIMARY KEY,
   person_id BIGINT REFERENCES person(person_id),
@@ -26,35 +26,41 @@ CREATE TABLE dna_sequence (
   length INT GENERATED ALWAYS AS (length(sequence)) STORED,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+```
 sequence_fingerprint - оптимизированные данные для поиска
 
-sql
+```sql
 CREATE TABLE sequence_fingerprint (
   fingerprint_id BIGSERIAL PRIMARY KEY,
   sequence_id BIGINT REFERENCES dna_sequence(sequence_id),
   kmer_hash BIGINT NOT NULL,
   kmer TEXT NOT NULL
 );
+```
 2. Методы доступа и индексы
 Для ускорения поиска ближайших родственников предлагается:
 
 GiST-индекс для полнотекстового поиска по последовательностям:
 
-sql
+```sql
 CREATE INDEX idx_dna_sequence_gin ON dna_sequence USING gin(sequence gin_trgm_ops);
+```
 RUM-индекс (расширение rum) для эффективного поиска похожих последовательностей:
 
-sql
+```sql
 CREATE EXTENSION rum;
 CREATE INDEX idx_dna_sequence_rum ON dna_sequence USING rum(sequence rum_tsvector_ops);
+```
 B-дерево для быстрого доступа по person_id:
 
-sql
+```sql
 CREATE INDEX idx_dna_sequence_person ON dna_sequence(person_id);
+```
 Хеш-индекс для быстрого поиска по k-mer хэшам:
 
-sql
+```sql
 CREATE INDEX idx_fingerprint_hash ON sequence_fingerprint USING hash(kmer_hash);
+```
 3. Алгоритм поиска родственников
 Препроцессинг данных:
 
@@ -80,39 +86,7 @@ CREATE INDEX idx_fingerprint_hash ON sequence_fingerprint USING hash(kmer_hash);
 
 Применяем алгоритмы локального выравнивания (Smith-Waterman) для точного сравнения
 
-4. Аппаратные требования
-Компонент	Спецификация	Обоснование
-Серверы БД	10 узлов	Для распределения нагрузки
-CPU	128 ядер на узел	Для параллельной обработки запросов
-RAM	1TB на узел	Для хранения индексов в памяти
-Хранилище	100TB NVMe SSD на узел	Для быстрого доступа к данным
-Сеть	100 Gbps	Для межсерверного взаимодействия
-5. Оценка производительности
-Объем данных:
-
-1 млрд человек × 1000 последовательностей = 1 трлн записей
-
-Средний размер последовательности: 500 символов × 1 байт = 500 байт
-
-Общий объем: ~500 TB сырых данных + индексы (~1.5 PB)
-
-Производительность поиска:
-
-Препроцессинг входных данных: ~100 мс
-
-Поиск кандидатов: ~500 мс
-
-Точное сравнение: ~1-2 сек
-
-Пропускная способность: ~1000 запросов/мин на кластере
-
-Метрики качества:
-
-Recall: 99.9% (доля реальных родственников среди найденных)
-
-Precision: 95% (доля реальных родственников среди всех найденных)
-
-6. Оптимизации для больших данных
+4. Оптимизации для больших данных
 Шардирование:
 
 Разделение данных по хэшу от person_id
@@ -136,28 +110,3 @@ Columnar storage:
 Для аналитических запросов можно использовать ClickHouse
 
 Предварительные агрегации по k-mer частотам
-
-7. Альтернативные подходы
-Для особо требовательных сценариев можно рассмотреть:
-
-Специализированные СУБД:
-
-Cassandra для горизонтального масштабирования
-
-Neo4j для представления родственных связей как графа
-
-Гибридные решения:
-
-PostgreSQL для хранения метаданных
-
-Elasticsearch для полнотекстового поиска
-
-Apache Spark для пакетной обработки
-
-Специальные биологические базы данных:
-
-Bio4j
-
-GenBank совместимые решения
-
-Данная архитектура обеспечивает баланс между производительностью, точностью поиска и стоимостью владения, позволяя эффективно обрабатывать запросы на поиск родственников в огромной базе данных ДНК.
