@@ -131,43 +131,35 @@ sudo python3 /opt/pg_arbiter.py &
 type = master
 id = node1
 host = pg-master
-```
-``` python
+
 [postgres]
 port = 5432
 data_dir = /var/lib/postgresql/12/main
-```
-``` python
+
 [arbiter]
 host = pg-arbiter
-```
-``` python
+
 [monitoring]
 check_interval = 10
 timeout = 5
 На Replica (/etc/pg_agent.conf):
 ```
-``` python
-ini
+```ini
 [node]
 type = replica
 id = node2
 host = pg-replica
-```
-``` python
+
 [postgres]
 port = 5432
 data_dir = /var/lib/postgresql/12/main
-```
-``` python
+
 [replication]
 master_host = pg-master
-```
-``` python
+
 [arbiter]
 host = pg-arbiter
-```
-``` python
+
 [monitoring]
 check_interval = 10
 timeout = 5
@@ -208,8 +200,7 @@ sudo -u postgres psql -c "CREATE TABLE test_failover(id serial PRIMARY KEY);"
 
 ## Автозапуск агента
 Создайте systemd сервис (/etc/systemd/system/pg_agent.service):
-``` python
-ini
+``` ini
 [Unit]
 Description=PostgreSQL HA Agent
 After=postgresql.service
